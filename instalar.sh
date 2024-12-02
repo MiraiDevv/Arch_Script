@@ -21,10 +21,34 @@ fi
 # Atualiza o relógio do sistema
 timedatectl set-ntp true
 
-# Verifica se o Python e o archinstall estão instalados
-if ! command -v python &> /dev/null || ! command -v archinstall &> /dev/null; then
+# Verifica e instala as dependências necessárias
+echo "Verificando dependências..."
+DEPS=("python" "archinstall" "git")
+DEPS_TO_INSTALL=()
+
+for dep in "${DEPS[@]}"; do
+    if ! command -v "$dep" &> /dev/null; then
+        echo "- $dep não encontrado"
+        DEPS_TO_INSTALL+=("$dep")
+    else
+        echo "- $dep já instalado"
+    fi
+done
+
+if [ ${#DEPS_TO_INSTALL[@]} -gt 0 ]; then
     echo "Instalando dependências necessárias..."
-    pacman -Sy --noconfirm python archinstall
+    pacman -Sy --noconfirm "${DEPS_TO_INSTALL[@]}"
+fi
+
+# Verifica se o script já está presente
+if [ ! -f "install_arch.py" ]; then
+    echo "Baixando script de instalação..."
+    if ! git clone https://github.com/seu-usuario/Arch_Script.git /tmp/arch_script; then
+        echo "Erro ao clonar o repositório!"
+        exit 1
+    fi
+    cp /tmp/arch_script/install_arch.py .
+    rm -rf /tmp/arch_script
 fi
 
 # Executa o script de instalação
